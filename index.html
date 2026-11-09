@@ -150,7 +150,7 @@ dialog input[type=text]{width:100%;margin-top:6px;padding:12px;border:1px solid 
     </div>
     <div class="tools">
       <span class="pill"><i class="dot" id="fbDot"></i><span id="fbTxt">설정 필요</span></span>
-      <span class="pill"><i class="dot" id="bdDot"></i><span id="bdTxt">보드 오프라인</span></span>
+      <button class="pill" id="bdPill" title="눌러서 보드 연결 진단" style="cursor:pointer;font-family:inherit;color:inherit"><i class="dot" id="bdDot"></i><span id="bdTxt">보드 오프라인</span></button>
       <button class="iconbtn" id="soundBtn" title="휴대폰 소리 켜기/끄기">🔔</button>
       <button class="iconbtn" id="setBtn" title="연결 설정">⚙️</button>
     </div>
@@ -452,7 +452,7 @@ function onBell() {
 function boardOnline() {
   if (mode === 'demo') return true;
   if (!st.lastSeen) return false;
-  return (Date.now() + serverOffset - st.lastSeen) < 7000;
+  return (Date.now() + serverOffset - st.lastSeen) < 15000;
 }
 function curLeds() {
   return boardOnline() ? { l1: !!st.led1, l2: !!st.led2 } : { l1: !!ctl.led1, l2: !!ctl.led2 };
@@ -665,6 +665,13 @@ function openSettings() {
   if (!$('settings').open) $('settings').showModal();
 }
 $('setBtn').onclick = openSettings;
+$('bdPill').onclick = () => {
+  if (mode === 'demo') { toast('데모 모드예요'); return; }
+  if (mode !== 'firebase' || !fbConnected) { toast('웹앱이 아직 Firebase에 연결되지 않았어요'); return; }
+  if (!st.lastSeen) { toast('보드가 보낸 데이터가 없어요 → 시리얼 모니터에서 와이파이·Firebase 쓰기 상태를 확인하세요'); return; }
+  const sec = Math.round((Date.now() + serverOffset - st.lastSeen) / 1000);
+  toast(boardOnline() ? `✅ 보드 신호 ${sec}초 전 (IP ${st.ip || '?'})` : `마지막 보드 신호: ${sec}초 전 → 보드 전원·와이파이를 확인하세요`);
+};
 $('btnClose').onclick = () => $('settings').close();
 $('btnSave').onclick = () => {
   const url = $('cfgUrl').value.trim().replace(/\/+$/, '');
