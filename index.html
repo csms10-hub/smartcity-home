@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5b4cf0">
+<title>창신이의 스마트 홈</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#f3f4fa; --card:#fff; --ink:#1d2033; --sub:#6b7089; --line:#e6e8f2;
+  --accent:#5b4cf0; --accent-soft:#ecebff;
+  --good:#14a074; --good-soft:#e2f7ef; --warn:#f0a020;
+  --bad:#e5384f; --bad-soft:#fde7ea; --light:#ffcb47;
+  --shadow:0 6px 24px rgba(30,35,80,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+[hidden]{display:none!important}
+button{font-family:inherit}
+
+/* ---------- 상단 ---------- */
+header.top{position:sticky;top:0;z-index:20;background:rgba(243,244,250,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7b6cff,#5b4cf0);display:grid;place-items:center;font-size:21px;flex:none}
+.title{flex:1;min-width:0}
+h1{font-size:clamp(15px,3.6vw,20px);margin:0;font-weight:800;line-height:1.3;word-break:keep-all}
+.subt{font-size:12px;color:var(--sub);margin-top:2px}
+.tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#bbb}
+.dot.on{background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+.dot.wait{background:var(--warn)}
+.dot.off{background:var(--bad)}
+.iconbtn{background:#fff;border:1px solid var(--line);width:36px;height:36px;border-radius:10px;font-size:17px;cursor:pointer}
+
+main{max-width:1100px;margin:0 auto;padding:16px 16px 40px;display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:720px){main{grid-template-columns:1fr 1fr}}
+@media(min-width:1040px){main{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:15px;margin:0 0 14px;display:flex;align-items:center;gap:8px;color:var(--sub);font-weight:700}
+.card h2 .em{font-size:19px}
+.err{grid-column:1/-1;background:var(--bad-soft);color:#a3142a;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:600}
+
+/* ---------- 날짜·시각·날씨 패널 ---------- */
+.hero{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  background:linear-gradient(135deg,#dfe9ff,#f4f1ff);transition:background .8s}
+.hero.sunny{background:linear-gradient(135deg,#bfe3ff 0%,#fff3c4 100%)}
+.hero.cloudy{background:linear-gradient(135deg,#c9cfdd 0%,#e9ecf3 100%)}
+.date{font-size:16px;font-weight:600;color:#3b4060}
+.clock{font-size:clamp(40px,10vw,64px);font-weight:800;letter-spacing:-1px;line-height:1.05;font-variant-numeric:tabular-nums}
+.greet{font-size:14px;color:#4b5070;margin-top:4px}
+.wx{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.65);padding:14px 18px;border-radius:18px}
+.wx-icon{font-size:56px;line-height:1}
+.wx-text{font-size:26px;font-weight:800}
+.wx-sub{font-size:13px;color:#4b5070}
+
+/* ---------- 조도 ---------- */
+.big{font-size:52px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:20px;color:var(--sub);font-weight:700;margin-left:2px}
+.meta{font-size:13px;color:var(--sub);margin-top:6px}
+.bar{height:12px;border-radius:99px;background:#eef0f6;overflow:hidden;margin:12px 0}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4d5679,#ffcb47);border-radius:99px;transition:width .5s}
+canvas#chart{width:100%;height:110px;display:block;background:#fafbff;border-radius:12px;border:1px solid var(--line)}
+.slider-row{margin-top:12px}
+.slider-row label{display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin-bottom:4px}
+.slider-row b{color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+
+/* ---------- 문 ---------- */
+.door-wrap{display:flex;justify-content:center;margin-bottom:6px}
+#doorSvg{width:190px;height:auto}
+.door-leaf{transform-box:view-box;transform-origin:70px 100px;transition:transform .9s cubic-bezier(.5,.1,.2,1)}
+#doorSvg.open .door-leaf{transform:scaleX(.16)}
+.status{text-align:center;font-weight:800;font-size:20px;margin:6px 0 12px}
+.status.good{color:var(--good)} .status.bad{color:var(--bad)} .status.mid{color:var(--accent)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:14px;padding:14px 10px;font-size:16px;font-weight:800;cursor:pointer;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn.danger{background:var(--bad);color:#fff}
+.note{font-size:12.5px;color:var(--sub);margin-top:10px;line-height:1.5}
+
+/* ---------- 조명 ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:#eef0f6;border-radius:12px;padding:4px;margin-bottom:12px}
+.seg button{border:0;background:transparent;padding:9px;border-radius:9px;font-weight:700;font-size:14px;color:var(--sub);cursor:pointer}
+.seg button.active{background:#fff;color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.house-wrap{display:flex;justify-content:center}
+#house{width:200px;height:auto}
+#house .win{fill:#3b4060;transition:fill .4s}
+#house.l1 .f1,#house.l2 .f2{fill:var(--light);filter:drop-shadow(0 0 6px #ffcb47)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .lbl{font-weight:700}
+.row .lbl small{display:block;font-weight:500;color:var(--sub);font-size:12px}
+
+/* 스위치 */
+.switch{position:relative;width:54px;height:32px;flex:none}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch span{position:absolute;inset:0;background:#d6d9e6;border-radius:99px;transition:.25s;cursor:pointer}
+.switch span::after{content:"";position:absolute;left:4px;top:4px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:.25s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::after{transform:translateX(22px)}
+.switch input:focus-visible+span{outline:3px solid #b9b2ff}
+.switch.red input:checked+span{background:var(--bad)}
+
+/* ---------- 보안 ---------- */
+.sec-state{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:#f4f5fa;margin-bottom:10px}
+.sec-state .ic{font-size:34px}
+.sec-state b{font-size:17px;display:block}
+.sec-state span{font-size:13px;color:var(--sub)}
+.sec-state.good{background:var(--good-soft)} .sec-state.bad{background:var(--bad-soft)}
+
+/* ---------- 데모 ---------- */
+.demo{border:2px dashed #c9c3ff;background:#fbfaff}
+
+/* ---------- 경보 화면 ---------- */
+.alarm{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;color:#fff;text-align:center;animation:flash .7s steps(2) infinite}
+@keyframes flash{0%{background:#e5384f}50%{background:#6e0010}}
+@media (prefers-reduced-motion:reduce){.alarm{animation:none;background:#c8102e}}
+.alarm-emoji{font-size:clamp(64px,16vw,120px);animation:shake .4s infinite}
+@keyframes shake{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.alarm-title{font-size:clamp(34px,9vw,88px);font-weight:900;line-height:1.2;word-break:keep-all;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.alarm-sub{font-size:18px;margin-top:12px;opacity:.9}
+.alarm button{margin-top:28px;font-size:20px;padding:16px 26px;border-radius:16px;border:0;background:#fff;color:#c8102e;font-weight:900;cursor:pointer}
+
+/* ---------- 토스트 / 설정 ---------- */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:#1d2033;color:#fff;padding:12px 18px;border-radius:14px;font-size:15px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:90;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+dialog{border:0;border-radius:20px;padding:22px;max-width:480px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,22,40,.45)}
+dialog h3{margin:0 0 6px;font-size:19px}
+dialog label{display:block;font-size:13px;font-weight:700;color:var(--sub);margin-top:14px}
+dialog input[type=text]{width:100%;margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit}
+.hint{font-size:12.5px;color:var(--sub);line-height:1.6;background:#f6f7fb;border-radius:12px;padding:10px 12px;margin-top:14px}
+.dlg-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:700;font-size:13px;margin-top:10px;cursor:pointer;padding:4px 0}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">🏠</div>
+    <div class="title">
+      <h1>창신이의 스마트 홈에 오신 것을 환영합니다</h1>
+      <div class="subt">ESP32 · Firebase 실시간 원격 제어</div>
+    </div>
+    <div class="tools">
+      <span class="pill"><i class="dot" id="fbDot"></i><span id="fbTxt">설정 필요</span></span>
+      <span class="pill"><i class="dot" id="bdDot"></i><span id="bdTxt">보드 오프라인</span></span>
+      <button class="iconbtn" id="soundBtn" title="휴대폰 소리 켜기/끄기">🔔</button>
+      <button class="iconbtn" id="setBtn" title="연결 설정">⚙️</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="err" id="errBox" hidden></div>
+
+  <!-- 날짜 · 시각 · 날씨 -->
+  <section class="card hero" id="hero">
+    <div>
+      <div class="date" id="dateText">--</div>
+      <div class="clock" id="timeText">--:--:--</div>
+      <div class="greet" id="greet">반가워요!</div>
+    </div>
+    <div class="wx">
+      <div class="wx-icon" id="wxIcon">❔</div>
+      <div>
+        <div class="wx-text" id="wxText">측정 대기</div>
+        <div class="wx-sub">밝기 <b id="wxBright">--</b>% · 맑음 기준 <span id="wxTh">50</span>%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 조도 센서 -->
+  <section class="card">
+    <h2><span class="em">🌤️</span>조도 센서 (실시간)</h2>
+    <div class="big"><span id="brightVal">--</span><small>%</small></div>
+    <div class="meta">센서 원래 값: <b id="rawVal">--</b> / 4095</div>
+    <div class="bar"><i id="brightBar"></i></div>
+    <canvas id="chart" aria-label="최근 1분 밝기 그래프"></canvas>
+    <div class="slider-row">
+      <label>맑음 / 흐림 기준 밝기 <b><span id="wxThVal">50</span>%</b></label>
+      <input type="range" id="wxThSlider" min="5" max="95" value="50">
+    </div>
+  </section>
+
+  <!-- 현관문 -->
+  <section class="card">
+    <h2><span class="em">🚪</span>현관문</h2>
+    <div class="door-wrap">
+      <svg id="doorSvg" viewBox="0 0 200 160" aria-hidden="true">
+        <rect x="18" y="18" width="164" height="134" rx="10" fill="#e9ecf6"/>
+        <rect x="64" y="44" width="72" height="108" rx="4" fill="#cfd4e6"/>
+        <rect x="70" y="50" width="60" height="100" fill="#2b2f45"/>
+        <g class="door-leaf">
+          <rect x="70" y="50" width="60" height="100" rx="3" fill="#b9814f"/>
+          <rect x="78" y="60" width="44" height="34" rx="3" fill="#a5703f"/>
+          <rect x="78" y="104" width="44" height="36" rx="3" fill="#a5703f"/>
+          <circle cx="120" cy="100" r="4" fill="#ffd166"/>
+        </g>
+        <rect x="14" y="150" width="172" height="6" rx="3" fill="#c3c8db"/>
+      </svg>
+    </div>
+    <div class="status" id="doorStatus">--</div>
+    <div class="btns">
+      <button class="btn primary" id="doorOpenBtn">🔓 문 열기</button>
+      <button class="btn ghost" id="doorCloseBtn">🔒 문 닫기</button>
+    </div>
+    <div class="note">현관 버튼을 누르면 <b>딩동!</b> 소리와 함께 문이 열리고 3초 뒤 자동으로 닫혀요.</div>
+  </section>
+
+  <!-- 조명 -->
+  <section class="card">
+    <h2><span class="em">💡</span>조명 (1층 · 2층)</h2>
+    <div class="seg">
+      <button id="modeAuto">🌗 자동 (조도 센서)</button>
+      <button id="modeManual">✋ 수동</button>
+    </div>
+    <div class="house-wrap">
+      <svg id="house" viewBox="0 0 220 190" aria-hidden="true">
+        <polygon points="110,8 18,78 202,78" fill="#7b6cff"/>
+        <rect x="34" y="76" width="152" height="108" rx="4" fill="#eef0f8" stroke="#d3d7e8"/>
+        <line x1="34" y1="130" x2="186" y2="130" stroke="#d3d7e8" stroke-width="3"/>
+        <rect class="win f2" x="50" y="88" width="40" height="30" rx="4"/>
+        <rect class="win f2" x="130" y="88" width="40" height="30" rx="4"/>
+        <rect class="win f1" x="50" y="142" width="40" height="30" rx="4"/>
+        <rect x="128" y="140" width="34" height="44" rx="3" fill="#b9814f"/>
+        <text x="194" y="108" font-size="11" fill="#6b7089">2층</text>
+        <text x="194" y="162" font-size="11" fill="#6b7089">1층</text>
+      </svg>
+    </div>
+    <div class="row">
+      <div class="lbl">1층 조명<small id="led1Txt">꺼짐</small></div>
+      <label class="switch"><input type="checkbox" id="led1Sw" aria-label="1층 조명"><span></span></label>
+    </div>
+    <div class="row">
+      <div class="lbl">2층 조명<small id="led2Txt">꺼짐</small></div>
+      <label class="switch"><input type="checkbox" id="led2Sw" aria-label="2층 조명"><span></span></label>
+    </div>
+    <div id="autoBox">
+      <div class="slider-row">
+        <label>1층이 켜지는 밝기 <b><span id="th1Val">60</span>% 미만</b></label>
+        <input type="range" id="th1" min="5" max="95" value="60">
+      </div>
+      <div class="slider-row">
+        <label>2층도 켜지는 밝기 <b><span id="th2Val">30</span>% 미만</b></label>
+        <input type="range" id="th2" min="5" max="95" value="30">
+      </div>
+    </div>
+    <div class="note" id="ledHint">자동: 주변이 어두워지면 불이 켜져요.</div>
+  </section>
+
+  <!-- 보안 -->
+  <section class="card">
+    <h2><span class="em">🛡️</span>보안 (창문 감시)</h2>
+    <div class="sec-state" id="winBox">
+      <div class="ic" id="winIc">🪟</div>
+      <div><b id="winTxt">창문 상태 확인 중</b><span>포토인터럽터 센서</span></div>
+    </div>
+    <div class="row">
+      <div class="lbl">보안 모드<small id="armTxt">꺼짐</small></div>
+      <label class="switch red"><input type="checkbox" id="armSw" aria-label="보안 모드"><span></span></label>
+    </div>
+    <div class="note">보안 모드를 켜 두면 창문이 열려 센서에 감지가 안 될 때 <b>사이렌</b>이 울리고 화면에 경고가 떠요.</div>
+  </section>
+
+  <!-- 데모 -->
+  <section class="card demo" id="demoCard" hidden>
+    <h2><span class="em">🧪</span>데모 모드 (보드 없이 체험)</h2>
+    <div class="slider-row">
+      <label>가짜 밝기 <b><span id="demoBrightVal">72</span>%</b></label>
+      <input type="range" id="demoBright" min="0" max="100" value="72">
+    </div>
+    <div class="btns" style="margin-top:10px">
+      <button class="btn ghost" id="demoBell">🔔 현관 버튼 누르기</button>
+      <button class="btn ghost" id="demoWin">🪟 창문 열기</button>
+    </div>
+    <div class="note">실제 보드를 연결하려면 ⚙️ 설정에서 Firebase 주소를 넣어 주세요.</div>
+  </section>
+</main>
+
+<!-- 경보 화면 -->
+<div class="alarm" id="alarm" hidden role="alert">
+  <div>
+    <div class="alarm-emoji">🚨</div>
+    <div class="alarm-title">창문이 열렸습니다.<br>도둑이 침입했습니다!</div>
+    <div class="alarm-sub">집에서 사이렌이 울리고 있어요</div>
+    <button id="alarmOff">경보 끄기 (보안 모드 해제)</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 설정 -->
+<dialog id="settings">
+  <h3>⚙️ Firebase 연결 설정</h3>
+  <div style="font-size:13px;color:var(--sub)">한 번 저장하면 이 기기에서는 다음부터 자동으로 연결돼요.</div>
+  <label>Realtime Database URL
+    <input type="text" id="cfgUrl" placeholder="https://프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app" autocomplete="off" spellcheck="false">
+  </label>
+  <label>웹 API 키 (선택)
+    <input type="text" id="cfgKey" placeholder="비워 둬도 돼요" autocomplete="off" spellcheck="false">
+  </label>
+  <div class="hint">
+    Firebase 콘솔 → Realtime Database 화면 맨 위의 주소를 복사해 넣으세요.<br>
+    아두이노 코드의 <b>FIREBASE_URL</b>과 같은 주소여야 해요.
+  </div>
+  <div class="dlg-btns">
+    <button class="btn ghost" id="btnDemo">🧪 데모 모드</button>
+    <button class="btn primary" id="btnSave">저장하고 연결</button>
+  </div>
+  <button class="linkbtn" id="btnShare">📋 다른 휴대폰용 접속 링크 복사</button>
+  <button class="linkbtn" id="btnClose" style="float:right;color:var(--sub)">닫기</button>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+
+// ▼ 선생님이 여기에 주소를 미리 넣어 두면 학생 휴대폰은 설정 없이 바로 연결돼요.
+const FIREBASE_DB_URL  = 'https://traffice-9d12f-default-rtdb.firebaseio.com';
+const FIREBASE_API_KEY = '';
+
+const FB_VER = '10.12.2';
+const DEFAULTS = { ledMode:'auto', led1:false, led2:false, th1:60, th2:30, armed:false, weatherTh:50 };
+
+let ctl = { ...DEFAULTS };   // 웹 → 보드 명령
+let st = {};                 // 보드 → 웹 상태
+let mode = 'none';           // 'firebase' | 'demo' | 'none'
+let fbConnected = false, fbError = '', serverOffset = 0;
+let backend = null, fbApp = null, fbUnsubs = [];
+let prevBell = null;
+const history = [];
+
+const $ = id => document.getElementById(id);
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+/* ===================== 명령 보내기 ===================== */
+function send(obj) {
+  if (!backend) { toast('먼저 ⚙️ 설정에서 Firebase를 연결해 주세요'); openSettings(); return; }
+  Object.assign(ctl, obj);
+  render();
+  Promise.resolve(backend.update(obj)).catch(e => toast('전송 실패: ' + (e.code || e.message)));
+}
+
+/* ===================== Firebase ===================== */
+function stopFirebase() {
+  const app = fbApp; fbApp = null; backend = null;
+  fbUnsubs.forEach(u => { try { u(); } catch (e) {} });
+  fbUnsubs = [];
+  if (app && app.__del) app.__del(app).catch(() => {});
+}
+
+async function startFirebase(url, apiKey) {
+  stopDemo(); stopFirebase();
+  mode = 'firebase'; fbConnected = false; fbError = ''; st = {}; prevBell = null; history.length = 0;
+  render();
+  try {
+    const A = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
+    const D = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-database.js`);
+    const cfg = { databaseURL: url };
+    if (apiKey) cfg.apiKey = apiKey;
+    const app = A.initializeApp(cfg, 'smarthome-' + Date.now());
+    app.__del = A.deleteApp;
+    fbApp = app;
+    const db = D.getDatabase(app);
+    const ctlRef = D.ref(db, 'home/control');
+    backend = { update: o => D.update(ctlRef, o) };
+
+    const onErr = e => {
+      fbError = /permission/i.test((e && (e.code || e.message)) || '')
+        ? '권한이 없어요 – Firebase 데이터베이스 규칙(Rules)을 확인하세요.'
+        : '오류: ' + (e && e.message);
+      render();
+    };
+    fbUnsubs.push(D.onValue(D.ref(db, '.info/connected'), s => { fbConnected = !!s.val(); render(); }));
+    fbUnsubs.push(D.onValue(D.ref(db, '.info/serverTimeOffset'), s => { serverOffset = s.val() || 0; }));
+
+    let first = true;
+    fbUnsubs.push(D.onValue(ctlRef, s => {
+      const v = s.val() || {};
+      if (first) {
+        first = false;
+        const miss = {};
+        for (const k in DEFAULTS) if (v[k] === undefined) miss[k] = DEFAULTS[k];
+        if (Object.keys(miss).length) D.update(ctlRef, miss).catch(onErr);
+      }
+      fbError = '';
+      ctl = { ...DEFAULTS, ...v };
+      render();
+    }, onErr));
+    fbUnsubs.push(D.onValue(D.ref(db, 'home/state'), s => onState(s.val() || {}), onErr));
+  } catch (e) {
+    fbError = '연결 실패: 주소가 맞는지, 인터넷이 되는지 확인하세요. (' + e.message + ')';
+    render();
+  }
+}
+
+/* ===================== 데모 모드 (보드 흉내) ===================== */
+const demo = { timer:null, bright:72, windowClosed:true, door:false, closeAt:0, alarm:false, bell:0, l1:false, l2:false };
+
+function startDemo() {
+  stopFirebase();
+  mode = 'demo'; fbConnected = true; fbError = ''; ctl = { ...DEFAULTS }; st = {}; prevBell = null; history.length = 0;
+  backend = { update: o => {
+    if (o.doorCmd) { demo.door = o.doorCmd.action === 'open'; demo.closeAt = 0; }
+    demoTick(); return Promise.resolve();
+  }};
+  $('demoCard').hidden = false;
+  clearInterval(demo.timer);
+  demo.timer = setInterval(demoTick, 400);
+  demoTick();
+}
+function stopDemo() {
+  clearInterval(demo.timer); demo.timer = null;
+  $('demoCard').hidden = true;
+}
+function demoTick() {
+  const now = Date.now(), b = demo.bright;
+  if (demo.closeAt && now >= demo.closeAt) { demo.door = false; demo.closeAt = 0; }
+  if (ctl.ledMode === 'manual') { demo.l1 = !!ctl.led1; demo.l2 = !!ctl.led2; }
+  else { demo.l1 = b < ctl.th1; demo.l2 = b < ctl.th2; }
+  if (!ctl.armed) demo.alarm = false; else if (!demo.windowClosed) demo.alarm = true;
+  onState({
+    raw: Math.round(b * 40.95), bright: b,
+    window: demo.windowClosed ? 'closed' : 'open', alarm: demo.alarm,
+    door: demo.door ? 'open' : 'closed', led1: demo.l1, led2: demo.l2,
+    autoLight: ctl.ledMode !== 'manual', bell: demo.bell, lastSeen: now - serverOffset, ip: 'demo'
+  });
+}
+
+/* ===================== 상태 수신 ===================== */
+function onState(v) {
+  st = v || {};
+  if (typeof st.bell === 'number') {
+    if (prevBell !== null && st.bell > prevBell) onBell();
+    prevBell = st.bell;
+  }
+  render();
+}
+function onBell() {
+  toast('🔔 딩동! 누군가 현관 버튼을 눌렀어요');
+  playDing();
+  vibrate([120, 80, 120]);
+}
+function boardOnline() {
+  if (mode === 'demo') return true;
+  if (!st.lastSeen) return false;
+  return (Date.now() + serverOffset - st.lastSeen) < 7000;
+}
+function curLeds() {
+  return boardOnline() ? { l1: !!st.led1, l2: !!st.led2 } : { l1: !!ctl.led1, l2: !!ctl.led2 };
+}
+
+/* ===================== 화면 그리기 ===================== */
+function setPill(p, cls, txt) {
+  $(p + 'Dot').className = 'dot ' + cls;
+  $(p + 'Txt').textContent = txt;
+}
+function setSlider(id, val) {
+  if (document.activeElement !== $(id)) $(id).value = val;
+}
+
+function render() {
+  const online = boardOnline();
+
+  // 연결 표시
+  if (mode === 'demo') setPill('fb', 'on', '데모 모드');
+  else if (mode === 'none') setPill('fb', 'off', '설정 필요');
+  else if (fbError) setPill('fb', 'off', '연결 오류');
+  else setPill('fb', fbConnected ? 'on' : 'wait', fbConnected ? 'Firebase 연결' : '연결 중…');
+  setPill('bd', online ? 'on' : 'off', online ? '보드 온라인' : '보드 오프라인');
+  $('errBox').hidden = !fbError;
+  $('errBox').textContent = '⚠️ ' + fbError;
+
+  // 조도
+  const b = (online && typeof st.bright === 'number') ? st.bright : null;
+  $('brightVal').textContent = b === null ? '--' : b;
+  $('rawVal').textContent = (online && typeof st.raw === 'number') ? st.raw : '--';
+  $('brightBar').style.width = (b ?? 0) + '%';
+
+  // 날씨
+  const th = Number(ctl.weatherTh ?? 50);
+  setSlider('wxThSlider', th);
+  $('wxThVal').textContent = $('wxThSlider').value;
+  $('wxTh').textContent = th;
+  $('wxBright').textContent = b === null ? '--' : b;
+  const hero = $('hero');
+  if (b === null) {
+    $('wxIcon').textContent = '❔'; $('wxText').textContent = '측정 대기'; hero.className = 'card hero';
+  } else if (b >= th) {
+    $('wxIcon').textContent = '☀️'; $('wxText').textContent = '맑음'; hero.className = 'card hero sunny';
+  } else {
+    $('wxIcon').textContent = '☁️'; $('wxText').textContent = '흐림'; hero.className = 'card hero cloudy';
+  }
+
+  // 문
+  const open = online && st.door === 'open';
+  $('doorSvg').classList.toggle('open', open);
+  const ds = $('doorStatus');
+  if (!online) { ds.textContent = '보드 연결 대기 중'; ds.className = 'status mid'; }
+  else if (open) { ds.textContent = '🔓 문이 열려 있어요'; ds.className = 'status bad'; }
+  else { ds.textContent = '🔒 문이 닫혀 있어요'; ds.className = 'status good'; }
+
+  // 조명
+  const auto = ctl.ledMode !== 'manual';
+  $('modeAuto').classList.toggle('active', auto);
+  $('modeManual').classList.toggle('active', !auto);
+  const { l1, l2 } = curLeds();
+  $('house').classList.toggle('l1', l1);
+  $('house').classList.toggle('l2', l2);
+  $('led1Sw').checked = l1; $('led2Sw').checked = l2;
+  $('led1Txt').textContent = l1 ? '켜짐' : '꺼짐';
+  $('led2Txt').textContent = l2 ? '켜짐' : '꺼짐';
+  $('autoBox').hidden = !auto;
+  setSlider('th1', ctl.th1); setSlider('th2', ctl.th2);
+  $('th1Val').textContent = $('th1').value; $('th2Val').textContent = $('th2').value;
+  $('ledHint').textContent = auto
+    ? '자동: 주변이 어두워지면 1층 → 2층 순서로 불이 켜져요. 스위치를 누르면 수동으로 바뀌어요.'
+    : '수동: 스위치로 1층·2층 불을 직접 켜고 꺼요.';
+
+  // 보안
+  $('armSw').checked = !!ctl.armed;
+  $('armTxt').textContent = ctl.armed ? '켜짐 – 창문을 지키는 중' : '꺼짐';
+  const wb = $('winBox');
+  if (!online || !st.window) { $('winIc').textContent = '🪟'; $('winTxt').textContent = '창문 상태 확인 중'; wb.className = 'sec-state'; }
+  else if (st.window === 'closed') { $('winIc').textContent = '✅'; $('winTxt').textContent = '창문이 닫혀 있어요'; wb.className = 'sec-state good'; }
+  else { $('winIc').textContent = '⚠️'; $('winTxt').textContent = '창문이 열려 있어요'; wb.className = 'sec-state bad'; }
+
+  // 데모 버튼 글자
+  $('demoWin').textContent = demo.windowClosed ? '🪟 창문 열기' : '🪟 창문 닫기';
+
+  // 경보
+  showAlarm(online && !!st.alarm && !!ctl.armed);
+}
+
+/* ===================== 경보 ===================== */
+let alarmShown = false;
+function showAlarm(on) {
+  if (on === alarmShown) return;
+  alarmShown = on;
+  $('alarm').hidden = !on;
+  if (on) { startSiren(); vibrate([400, 200, 400, 200, 400]); }
+  else stopSiren();
+}
+
+/* ===================== 휴대폰 소리 ===================== */
+let actx = null, siren = null;
+let soundOn = lsGet('sh_sound') !== 'off';
+function ac() {
+  if (!actx) {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    actx = new C();
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+document.addEventListener('pointerdown', () => ac(), { once: true });
+
+function playDing() {
+  if (!soundOn) return;
+  const c = ac(); if (!c) return;
+  const t = c.currentTime;
+  [[1319, 0, 0.45], [1047, 0.42, 0.9]].forEach(([f, s, d]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t + s);
+    g.gain.exponentialRampToValueAtTime(0.4, t + s + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + s + d);
+    o.connect(g); g.connect(c.destination);
+    o.start(t + s); o.stop(t + s + d + 0.05);
+  });
+}
+function startSiren() {
+  if (!soundOn || siren) return;
+  const c = ac(); if (!c) return;
+  const o = c.createOscillator(), lfo = c.createOscillator(), lg = c.createGain(), g = c.createGain();
+  o.type = 'sawtooth'; o.frequency.value = 1100;
+  lfo.type = 'triangle'; lfo.frequency.value = 0.9; lg.gain.value = 500;
+  lfo.connect(lg); lg.connect(o.frequency);
+  g.gain.value = 0.18;
+  o.connect(g); g.connect(c.destination);
+  o.start(); lfo.start();
+  siren = { o, lfo };
+}
+function stopSiren() {
+  if (!siren) return;
+  try { siren.o.stop(); siren.lfo.stop(); } catch (e) {}
+  siren = null;
+}
+function vibrate(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+function updateSoundBtn() { $('soundBtn').textContent = soundOn ? '🔔' : '🔕'; }
+
+/* ===================== 시계 + 그래프 ===================== */
+function tick() {
+  const d = new Date();
+  $('dateText').textContent = d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  const p = n => String(n).padStart(2, '0');
+  $('timeText').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  const h = d.getHours();
+  $('greet').textContent = h < 6 ? '🌙 깊은 밤이에요. 문단속 잘 했나요?'
+    : h < 12 ? '🌅 좋은 아침이에요!'
+    : h < 18 ? '🌞 즐거운 오후 보내세요!'
+    : '🌆 편안한 저녁 되세요!';
+
+  if (boardOnline() && typeof st.bright === 'number') {
+    history.push(st.bright);
+    if (history.length > 60) history.shift();
+  }
+  drawChart();
+  render();
+  if (alarmShown && d.getSeconds() % 3 === 0) vibrate([300, 150, 300]);
+}
+
+function drawChart() {
+  const cv = $('chart'), dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const y = v => h - 6 - (v / 100) * (h - 12);
+
+  const th = Number(ctl.weatherTh ?? 50);
+  g.setLineDash([4, 4]); g.strokeStyle = '#c9cbe0'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, y(th)); g.lineTo(w, y(th)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#9aa0b8'; g.font = '11px Pretendard, sans-serif';
+  g.fillText('맑음 기준', 6, y(th) - 4);
+
+  if (history.length < 2) {
+    g.fillText('센서값을 기다리는 중… (최근 1분 그래프)', 6, h - 10);
+    return;
+  }
+  const step = w / 59, x0 = w - (history.length - 1) * step;
+  g.beginPath();
+  history.forEach((v, i) => { const X = x0 + i * step, Y = y(v); i ? g.lineTo(X, Y) : g.moveTo(X, Y); });
+  g.strokeStyle = '#5b4cf0'; g.lineWidth = 2.4; g.lineJoin = 'round'; g.stroke();
+  g.lineTo(x0 + (history.length - 1) * step, h); g.lineTo(x0, h); g.closePath();
+  const grad = g.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(91,76,240,.25)'); grad.addColorStop(1, 'rgba(91,76,240,0)');
+  g.fillStyle = grad; g.fill();
+}
+
+/* ===================== 토스트 ===================== */
+let toastT;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ===================== 설정 ===================== */
+function openSettings() {
+  $('cfgUrl').value = FIREBASE_DB_URL || lsGet('sh_url') || '';
+  $('cfgKey').value = lsGet('sh_key') || FIREBASE_API_KEY;
+  if (!$('settings').open) $('settings').showModal();
+}
+$('setBtn').onclick = openSettings;
+$('btnClose').onclick = () => $('settings').close();
+$('btnSave').onclick = () => {
+  const url = $('cfgUrl').value.trim().replace(/\/+$/, '');
+  const key = $('cfgKey').value.trim();
+  if (!/^https:\/\/\S+$/.test(url)) { toast('https:// 로 시작하는 Database URL을 넣어 주세요'); return; }
+  lsSet('sh_url', url); lsSet('sh_key', key);
+  $('settings').close();
+  startFirebase(url, key);
+  toast('Firebase에 연결하는 중…');
+};
+$('btnDemo').onclick = () => { $('settings').close(); startDemo(); toast('🧪 데모 모드: 보드 없이 화면을 체험해요'); };
+$('btnShare').onclick = async () => {
+  const url = ($('cfgUrl').value.trim() || lsGet('sh_url') || '').replace(/\/+$/, '');
+  if (!url) { toast('먼저 Database URL을 넣어 주세요'); return; }
+  if (location.protocol === 'file:') { toast('웹사이트에 올린 뒤에 링크 공유가 돼요'); return; }
+  const link = location.origin + location.pathname + '?db=' + encodeURIComponent(url);
+  try { await navigator.clipboard.writeText(link); toast('링크를 복사했어요! 단톡방에 붙여 넣으세요'); }
+  catch (e) { prompt('이 링크를 복사하세요', link); }
+};
+
+/* ===================== 버튼 연결 ===================== */
+$('doorOpenBtn').onclick = () => {
+  send({ doorCmd: { action: 'open', id: Date.now() } });
+  toast(boardOnline() ? '🔓 문 열기 명령을 보냈어요' : '명령은 보냈지만 보드가 오프라인이에요');
+};
+$('doorCloseBtn').onclick = () => {
+  send({ doorCmd: { action: 'close', id: Date.now() } });
+  toast(boardOnline() ? '🔒 문 닫기 명령을 보냈어요' : '명령은 보냈지만 보드가 오프라인이에요');
+};
+$('modeAuto').onclick = () => { send({ ledMode: 'auto' }); toast('🌗 자동 조명 모드'); };
+$('modeManual').onclick = () => { const c = curLeds(); send({ ledMode: 'manual', led1: c.l1, led2: c.l2 }); toast('✋ 수동 조명 모드'); };
+function ledSwitch(which, on) {
+  const c = curLeds();
+  const wasAuto = ctl.ledMode !== 'manual';
+  const o = { ledMode: 'manual', led1: c.l1, led2: c.l2 };
+  o[which] = on;
+  send(o);
+  if (wasAuto) toast('스위치를 눌러서 수동 모드로 바뀌었어요');
+}
+$('led1Sw').onchange = e => ledSwitch('led1', e.target.checked);
+$('led2Sw').onchange = e => ledSwitch('led2', e.target.checked);
+
+$('th1').oninput = e => $('th1Val').textContent = e.target.value;
+$('th2').oninput = e => $('th2Val').textContent = e.target.value;
+$('th1').onchange = e => send({ th1: Number(e.target.value) });
+$('th2').onchange = e => send({ th2: Number(e.target.value) });
+$('wxThSlider').oninput = e => $('wxThVal').textContent = e.target.value;
+$('wxThSlider').onchange = e => send({ weatherTh: Number(e.target.value) });
+
+$('armSw').onchange = e => {
+  const on = e.target.checked;
+  send({ armed: on });
+  if (on && st.window === 'open') toast('⚠️ 창문이 열려 있어서 바로 경보가 울려요!');
+  else toast(on ? '🛡️ 보안 모드를 켰어요' : '보안 모드를 껐어요');
+};
+$('alarmOff').onclick = () => { stopSiren(); send({ armed: false }); toast('경보를 껐어요. 창문을 닫고 다시 보안 모드를 켜세요'); };
+
+$('soundBtn').onclick = () => {
+  soundOn = !soundOn;
+  lsSet('sh_sound', soundOn ? 'on' : 'off');
+  updateSoundBtn();
+  if (!soundOn) stopSiren(); else { ac(); if (alarmShown) startSiren(); }
+  toast(soundOn ? '🔔 휴대폰 소리 켜짐' : '🔕 휴대폰 소리 꺼짐');
+};
+
+// 데모 조작
+$('demoBright').oninput = e => { demo.bright = Number(e.target.value); $('demoBrightVal').textContent = e.target.value; demoTick(); };
+$('demoBell').onclick = () => { demo.bell++; demo.door = true; demo.closeAt = Date.now() + 3000; demoTick(); };
+$('demoWin').onclick = () => { demo.windowClosed = !demo.windowClosed; demoTick(); };
+
+/* ===================== 시작 ===================== */
+updateSoundBtn();
+const qp = new URLSearchParams(location.search).get('db');
+if (qp) lsSet('sh_url', qp);
+const startUrl = qp || FIREBASE_DB_URL || lsGet('sh_url');
+if (startUrl) startFirebase(startUrl, lsGet('sh_key') || FIREBASE_API_KEY);
+else { render(); openSettings(); }
+tick();
+setInterval(tick, 1000);
+window.addEventListener('resize', drawChart);
+})();
+</script>
+</body>
+</html>
